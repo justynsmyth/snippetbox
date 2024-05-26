@@ -1,0 +1,27 @@
+# Ignore editor backup files
+*~
+*.un~
+
+# Ignore build artifacts
+*.exe
+*.out
+*.log
+*.bin
+
+# Ignore directories
+
+bin/
+obj/
+dist/
+vendor/
+
+# Ignore IDE-Specific Files
+.vscode/
+.idea/
+.DS_Store
+
+# Ignore system files
+Thumbs.dp
+desktop.ini
+
+
