@@ -7,6 +7,18 @@ import (
 	"os"
 )
 
+// Custom Structured logger dependency needs to be injected to handlers
+// We define handler functions as methods against application struct
+type application struct {
+	logger *slog.Logger
+}
+
+// -----------------------------------------------------------------------------
+// Purpose:
+// Parsing the runtime configuration settings for the application;
+// Establishing the dependencies for the handlers;
+// Running the HTTP server.
+// -----------------------------------------------------------------------------
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	flag.Parse()
@@ -28,25 +40,19 @@ func main() {
 	*/
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	mux := http.NewServeMux()
-
-	// serves files out of a directory
-	fileServer := http.FileServer(http.Dir("./ui/static"))
-	// This will find any URL paths that start with "/static/" for matching paths
-	// We need to strip /static part as well
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
-
-	mux.HandleFunc("GET /{$}", home)
-	mux.HandleFunc("GET /snippet/view/{id}", snippetView)
-	mux.HandleFunc("GET /snippet/create", snippetCreate)
-	mux.HandleFunc("POST /snippet/create", snippetCreatePost)
+	// Initialize a new instance of our application struct, containing the
+	// dependencies (for now, just the structured logger).
+	app := &application{
+		logger: logger,
+	}
 
 	// logger.Info("starting server", "addr", *addr)
 	// the below method avoids key/value !BADKEY issues
 	// It will force attribute pairs together
 	logger.Info("starting server", slog.Any("addr", ":4000"))
-
-	err := http.ListenAndServe(*addr, mux)
+	// Call the new app.routes() method to get the servemux containing our routes,
+	// and pass that to http.ListenAndServe().
+	err := http.ListenAndServe(*addr, app.routes())
 	logger.Error(err.Error())
 	os.Exit(1)
 }
